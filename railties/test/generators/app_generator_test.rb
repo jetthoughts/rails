@@ -114,6 +114,24 @@ class AppGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  def test_adds_bin_yarn_into_setup_script
+    app_root = File.join(destination_root, "myapp")
+    run_generator [app_root]
+
+    stub_rails_application(app_root) do
+      generator = Rails::Generators::AppGenerator.new ["rails"], [], { destination_root: app_root, shell: @shell }
+      generator.send(:app_const)
+      quietly { generator.send(:update_bin_files) }
+
+      assert_file "#{app_root}/bin/yarn"
+
+      assert_file "#{app_root}/bin/setup" do |content|
+        assert_match(/(?=[^#]) system! 'bin\/yarn'/, content)
+      end
+    end
+  end
+
+
   def test_assets
     run_generator
 
@@ -307,7 +325,7 @@ class AppGeneratorTest < Rails::Generators::TestCase
       assert_no_file "#{app_root}/bin/yarn"
 
       assert_file "#{app_root}/bin/setup" do |content|
-        assert_no_match(/system\('bin\/yarn'\)/, content)
+        assert_no_match(/system! 'bin\/yarn'/, content)
       end
     end
   end
